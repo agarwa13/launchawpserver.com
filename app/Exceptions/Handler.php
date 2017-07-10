@@ -22,6 +22,8 @@ class Handler extends ExceptionHandler
         \Illuminate\Validation\ValidationException::class,
     ];
 
+    private $sentryID;
+
     /**
      * Report or log an exception.
      *
@@ -32,6 +34,10 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $exception)
     {
+        if ($this->shouldReport($exception)) {
+            $this->sentryID = app('sentry')->captureException($exception);
+        }
+
         parent::report($exception);
     }
 
@@ -44,7 +50,15 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        return parent::render($request, $exception);
+        return response()->view('errors.500', [
+            'sentryID' => $this->sentryID,
+        ], 500);
+
+        /*
+         * The following line was the only line in the render method before
+         * wiring up Sentry
+         */
+//        return parent::render($request, $exception);
     }
 
     /**

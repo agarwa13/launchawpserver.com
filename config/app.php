@@ -173,10 +173,19 @@ return [
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
+        /*
+         * Sentry Provider
+         */
+        Sentry\SentryLaravel\SentryLaravelServiceProvider::class,
+
+        /*
+         * Flash Messages Provider
+         */
+        Laracasts\Flash\FlashServiceProvider::class,
     ],
 
     /*
@@ -225,7 +234,10 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
-
+        /*
+         * Sentry
+         */
+        'Sentry' => Sentry\SentryLaravel\SentryFacade::class,
     ],
 
 ];

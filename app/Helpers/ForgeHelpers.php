@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: nikhilagarwal
+ * User: Nikhil Agarwal
  * Date: 6/25/17
  * Time: 10:16 PM
  */
@@ -241,12 +241,13 @@ class ForgeHelpers
     }
 
     /**
+     * @param $server_id
      * @param $domain
      * @param $project_type
      * @param $directory
      * @return mixed
      */
-    public static function create_site( $domain, $project_type, $directory ){
+    public static function create_site( $server_id, $domain, $project_type, $directory ){
 
         // Get a Forge Client
         $client = self::get_forge_client( );
@@ -265,20 +266,17 @@ class ForgeHelpers
 
 
     /**
+     * @param $server_id
      * @param $name
-     * @param $user
-     * @param $password
      * @return mixed
      */
-    public static function create_database($name, $user, $password){
+    public static function create_database($server_id, $name){
         // Get a Forge Client
         $client = self::get_forge_client( );
 
         // Send a Request to Forge to Create the Database
         $response = $client->request('POST','servers/'.$server_id.'/mysql', ['json' => [
-            'name' => $name,
-            'user' => $user,
-            'password' => $password
+            'name' => $name
         ]]);
 
         // Return the response as an Array
@@ -286,6 +284,53 @@ class ForgeHelpers
 
     }
 
+    /**
+     * @param $server_id
+     * @param $name
+     * @param $password
+     * @param $database_id
+     * @return mixed
+     */
+    public static function create_database_user($server_id, $name, $password, $database_id){
+        // Get a Forge Client
+        $client = self::get_forge_client( );
+
+        // Send a Request to Forge to Create the User
+        $response = $client->request('POST','servers/'.$server_id.'/mysql-users', ['json' => [
+            'name' => $name,
+            'password' => $password,
+            'databases' => [$database_id]
+        ]]);
+
+        // Return the response as an Array
+        return json_decode((string) $response->getBody(), true);
+
+    }
+
+
+    public static function wait_until_database_user_is_ready($server_id, $user_id){
+        for($i = 0; $i < 20; $i++){
+            if(self::is_database_user_ready($server_id, $user_id)){
+                return true;
+            }
+            sleep(2*60);
+        }
+        return false;
+    }
+
+    public static function is_database_user_ready($server_id, $user_id){
+
+        // Get a Forge Client
+        $client = self::get_forge_client();
+
+        // Send a Request to get the Server Information
+        $response = $client->request('GET','servers/'.$server_id.'/mysql-users/'.$user_id);
+
+        // Return the value of the is_ready attribtue
+        $json = json_decode((string) $response->getBody(), true);
+        return ($json['user']['status'] == 'installed');
+
+    }
 
     /**
      * @param $server_id
@@ -308,6 +353,27 @@ class ForgeHelpers
         // Return the response as an Array
         return json_decode((string) $response->getBody(), true);
 
+    }
+
+
+    /**
+     * @param $server_id
+     */
+    public static function restart_server($server_id){
+        // Get a Forge Client
+        $client = self::get_forge_client( );
+
+        // Send a Request to Forge to Install WordPress
+        $client->request('POST','servers/'.$server_id.'/reboot');
+
+    }
+
+    /**
+     * @param $server_id
+     */
+    public static function reboot_server($server_id)
+    {
+        self::restart_server($server_id);
     }
 
 }

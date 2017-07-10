@@ -18,7 +18,8 @@ $brand-danger: #bf5329;
 
 // Typography
 $icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
-$font-family-sans-serif: "Raleway", sans-serif;
+//$font-family-sans-serif: "Raleway", sans-serif;
+$font-family-sans-serif: "Libre Franklin", "Helvetica Neue", helvetica, arial, sans-serif;
 $font-size-base: 14px;
 $line-height-base: 1.6;
 $text-color: #636b6f;
@@ -28,6 +29,7 @@ $navbar-default-bg: #fff;
 
 // Buttons
 $btn-default-color: $text-color;
+
 
 // Inputs
 $input-border: lighten($text-color, 40%);

@@ -11,10 +11,33 @@
 |
 */
 
+/*
+ * Home Page
+ */
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('test-launcher','LaunchController@testLauncher');
+Route::get('/home', 'HomeController@index')->name('home');
+
+/*
+ * The Guides
+ */
+Route::get('credentials/guide','CredentialController@guide');
+Route::get('servers/guide','ServerController@guide');
+
+/*
+ * Personalized Launch
+ */
+Route::get('hand-held-launch','HomeController@handHeldLaunch');
+
+//Route::get('test-launcher','LaunchController@testLauncher');
 
 Route::resource('launch','LaunchController');
+Route::resource('sites','SiteController');
+Route::resource('servers','ServerController');
+Route::resource('credentials','CredentialController');
+
+Auth::routes();
+
+

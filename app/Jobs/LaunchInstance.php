@@ -2,19 +2,23 @@
 
 namespace App\Jobs;
 
-use App\Launcher;
-use Aws\Ec2\Ec2Client;
+use App\Helpers\AWSHelpers;
+use App\Server;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 
 class LaunchInstance implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, DispatchesJobs{
+        Dispatchable::dispatch insteadOf DispatchesJobs;
+        DispatchesJobs::dispatch as jobDispatcher;
+    }
 
-    protected $launcher;
+    protected $server;
 
     /*
      * Set the Timeout to be 5 minutes
@@ -23,11 +27,11 @@ class LaunchInstance implements ShouldQueue
 
     /**
      * Create a new job instance
-     * @param Launcher $launcher
+     * @param Server $server
      */
-    public function __construct(Launcher $launcher)
+    public function __construct(Server $server)
     {
-        $this->launcher = $launcher;
+        $this->server = $server;
     }
 
     /**
@@ -38,112 +42,43 @@ class LaunchInstance implements ShouldQueue
     public function handle()
     {
 
-        // Create an EC2 Client
-        $ec2Client = Ec2Client::factory(array(
-            'key'    => $this->launcher->aws_access_key_id,
-            'secret' => $this->launcher->aws_secret_access_key,
-            'region' => $this->launcher->region, // (e.g., us-east-1)
-            'version' => '2016-11-15',
-            'credentials' => array(
-                'key'    => $this->launcher->aws_access_key_id,
-                'secret' => $this->launcher->aws_secret_access_key
-            )
-        ));
+        // Update the Status to Building
+        $this->server->status = 'Building';
+        $this->server->save();
 
         // Create a Key Pair
-        $keyPairName = 'key-pair-'.$this->launcher->id;
-        $result = $ec2Client->createKeyPair(array(
-            'KeyName' => $keyPairName
-        ));
+        $keyPairName = 'key-pair-'.$this->server->id;
+        $result = AWSHelpers::create_key_pair($this->server, $keyPairName);
 
         // Save the Private key to Disk
         $saveKeyLocation = storage_path('app/'.$keyPairName.".pem");
         file_put_contents( $saveKeyLocation ,  $result['KeyMaterial'] );
 
         // Save the location to Database for later retrieval using the Storage::get function
-        $this->launcher->key_pair_location = $keyPairName.".pem";
-        $this->launcher->save();
+        $this->server->key_pair_location = $keyPairName.".pem";
+        $this->server->save();
 
         // Update the key's permissions so it can be used with SSH
         chmod( $saveKeyLocation , 0600);
 
         // Create the Security Group
-        $securityGroupName = 'bloggercasts-webserver-'.$this->launcher->id;
-        $ec2Client->createSecurityGroup(array(
-            'GroupName'   => $securityGroupName,
-            'Description' => 'Basic web server security'
-        ));
+        $securityGroupName = AWSHelpers::create_security_group($this->server);
 
-        // Set ingress rules for the security group
-        $ec2Client->authorizeSecurityGroupIngress(array(
-            'GroupName'     => $securityGroupName,
-            'IpPermissions' => array(
-                array(
-                    'IpProtocol' => 'tcp',
-                    'FromPort'   => 80,
-                    'ToPort'     => 80,
-                    'IpRanges'   => array(
-                        array('CidrIp' => '0.0.0.0/0')
-                    ),
-                ),
-                array(
-                    'IpProtocol' => 'tcp',
-                    'FromPort'   => 22,
-                    'ToPort'     => 22,
-                    'IpRanges'   => array(
-                        array('CidrIp' => '0.0.0.0/0')
-                    ),
-                ),
-                array(
-                    'IpProtocol' => 'tcp',
-                    'FromPort'   => 443,
-                    'ToPort'     => 443,
-                    'IpRanges'   => array(
-                        array('CidrIp' => '0.0.0.0/0')
-                    ),
-                )
-            )
-        ));
+        // Launch an instance with the recently created key pair and security group
+        AWSHelpers::launchInstance( $this->server, $keyPairName, $securityGroupName );
 
-        // Launch an instance with the key pair and security group
-        $result = $ec2Client->runInstances(array(
-            'ImageId'        => 'ami-840910ee',
-            'MinCount'       => 1,
-            'MaxCount'       => 1,
-            'InstanceType'   => 't2.micro',
-            'KeyName'        => $keyPairName,
-            'SecurityGroups' => array($securityGroupName),
-        ));
-
-        // Get the Instance IDs
-        $instances = $result->get('Instances');
-        $instance = $instances[0];
-        $instance_id = $instance['InstanceId'];
-
-        // Save the Instance ID to the Database
-        $this->launcher->instance_id = $instance_id;
-        $this->launcher->save();
-
-        // Wait until the instance is launched
-        $ec2Client->getWaiter('InstanceStatusOk',array(
-            'InstanceIds' => [$instance_id],
-        ));
-
-        // We wait an additional 5 seconds,
-        // to make sure an IP Address is assigned
-        sleep(5);
-
-        // Describe the now-running instance to get the public ip address
-        $result = $ec2Client->describeInstances(array(
-            'InstanceIds' => [$instance_id],
-        ));
+        // Wait until the instance is Fully Launched
+        AWSHelpers::wait_until_instance_is_ready( $this->server );
 
         // Store the IP Address in the Database
-        $this->launcher->ip_address = $result['Reservations'][0]['Instances'][0]['PublicIpAddress'];
-        $this->launcher->private_ip_address = $result['Reservations'][0]['Instances'][0]['NetworkInterfaces'][0]['PrivateIpAddress'];
-        $this->launcher->status = 'Instance Launched';
-        $this->launcher->save();
+        AWSHelpers::update_ip_addresses_in_database( $this->server );
 
+        // Launch a Job to Provision the Server
+        $this->jobDispatcher( new ProvisionInstance( $this->server) );
+
+        // Update the Status
+        $this->server->status = 'Queued for Provisioning';
+        $this->server->save();
 
     }
 }

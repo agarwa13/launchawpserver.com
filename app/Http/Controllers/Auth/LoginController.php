@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
@@ -26,6 +27,20 @@ class LoginController extends Controller
      * @var string
      */
     protected $redirectTo = '/home';
+
+    /**
+     * Determine the return path for the user
+     * @return string
+     */
+    protected function redirectTo()
+    {
+        if ( Auth::user()->credentials->count() > 0 ) {
+            return '/servers';
+        }
+        else{
+            return '/credentials/guide';
+        }
+    }
 
     /**
      * Create a new controller instance.
