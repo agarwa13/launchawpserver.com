@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property $created_at
  * @property $updated_at
  * @property $server
+ * @property $status
  * @package App
  */
 class Site extends Model

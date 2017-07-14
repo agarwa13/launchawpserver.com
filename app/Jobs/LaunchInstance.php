@@ -43,7 +43,7 @@ class LaunchInstance implements ShouldQueue
     {
 
         // Update the Status to Building
-        $this->server->status = 'Building';
+        $this->server->status = config('constants.server_building');
         $this->server->save();
 
         // Create a Key Pair
@@ -73,12 +73,19 @@ class LaunchInstance implements ShouldQueue
         // Store the IP Address in the Database
         AWSHelpers::update_ip_addresses_in_database( $this->server );
 
-        // Launch a Job to Provision the Server
-        $this->jobDispatcher( new ProvisionInstance( $this->server) );
+        // Launch a Job to Upgrade the Server
+        $this->jobDispatcher( new UpgradeServer( $this->server) );
 
         // Update the Status
-        $this->server->status = 'Queued for Provisioning';
+        $this->server->status = config('constants.server_queued_for_upgrading');
         $this->server->save();
 
+    }
+
+    public function failed()
+    {
+        // When the Job Fails, we want to update the status of the Server to say so
+        $this->server->status = config('constants.server_build_failed');
+        $this->server->save();
     }
 }

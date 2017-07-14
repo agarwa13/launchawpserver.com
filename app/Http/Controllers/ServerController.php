@@ -106,7 +106,7 @@ class ServerController extends Controller
          * Default Information
          */
         $server->php_version = config('constants.default_php_version');
-        $server->status = 'Queued for Launch';
+        $server->status = config('constants.server_queued_for_building');
         $server->save();
 
         /*
@@ -132,7 +132,8 @@ class ServerController extends Controller
      */
     public function show(Server $server)
     {
-        //
+        return view('servers.show')
+            ->with('server',$server);
     }
 
     /**

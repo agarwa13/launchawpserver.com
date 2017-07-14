@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ForgeHelpers;
+use App\Jobs\LaunchSite;
+use App\Server;
 use App\Site;
 use Illuminate\Http\Request;
 
@@ -35,7 +38,52 @@ class SiteController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
+        /*
+         * Do Basic Validation of the Inputs
+         * TODO: Need to add a validation rule for a domain name
+         */
+        $this->validate($request, [
+            'domain_name' => 'required',
+            'server_id' => [
+                'required',
+                'exists:servers,id'
+            ]
+        ]);
+
+
+        /*
+         * Add to Database
+         */
+        $site = new Site();
+
+        /*
+         * Information from Request
+         */
+        $site->domain_name = $request->domain_name;
+        $site->server_id = $request->server_id;
+
+        /*
+         * Generate WordPress Database Credentials
+         */
+        $site->database_name =  ForgeHelpers::getRandomDatabaseName();
+        $site->database_user_name = ForgeHelpers::getRandomDatabaseUserName();
+        $site->database_user_password = ForgeHelpers::getRandomDatabaseUserPassword();
+        $site->save();
+
+        /*
+         * Queue a Job to Launch the Instance on Forge
+         */
+        dispatch( new LaunchSite( $site ) );
+
+        /*
+         * Flash Success Message
+         */
+        flash('Server is Queued for Building');
+
+        return view('servers.index')
+            ->with('servers',Auth::user()->servers);
+
     }
 
     /**

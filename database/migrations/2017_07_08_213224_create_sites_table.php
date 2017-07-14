@@ -15,7 +15,7 @@ class CreateSitesTable extends Migration
     {
         Schema::create('sites', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('forge_site_id');
+            $table->integer('forge_site_id')->nullable();
             $table->string('domain_name');
             $table->string('forge_database_id')->nullable();
             $table->string('forge_database_user_id')->nullable();
@@ -23,6 +23,7 @@ class CreateSitesTable extends Migration
             $table->string('database_user_name')->nullable();
             $table->string('database_user_password')->nullable();
             $table->integer('server_id');
+            $table->string('status');
             $table->timestamps();
         });
     }

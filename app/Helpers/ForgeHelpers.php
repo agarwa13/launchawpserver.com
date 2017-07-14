@@ -8,12 +8,45 @@
 
 namespace App\Helpers;
 
+use App\Site;
 use GuzzleHttp\Client;
 
 
 
 class ForgeHelpers
 {
+
+
+
+
+    public static function getRandomDatabaseUserName($len = 10) {
+        $word = array_merge(range('a', 'z'), range('A', 'Z'));
+        shuffle($word);
+        return substr(implode($word), 0, $len);
+    }
+
+    public static function getRandomDatabaseName($len = 10) {
+         return self::getRandomDatabaseUserName($len);
+    }
+
+    public static function getRandomDatabaseUserPassword($len = 10) {
+        return self::getRandomDatabaseUserName($len);
+    }
+
+    public static function add_key($server_id, $name, $key)
+    {
+        // Get a Forge Client
+        $client = self::get_forge_client();
+
+        // Send a Request to Forge to Create the Server
+        $response = $client->request('POST','servers/'.$server_id.'/keys', ['json' => [
+            'name' => $name,
+            'key' => $key
+        ]]);
+
+        // Return the response
+        return json_decode((string) $response->getBody(), true);
+    }
 
     public static function wait_until_database_is_ready( $server_id, $database_id ){
         // We wait for 5 seconds before sending the first check up request
@@ -247,7 +280,7 @@ class ForgeHelpers
      * @param $directory
      * @return mixed
      */
-    public static function create_site( $server_id, $domain, $project_type, $directory ){
+    public static function create_site( $server_id, $domain ){
 
         // Get a Forge Client
         $client = self::get_forge_client( );
@@ -255,8 +288,8 @@ class ForgeHelpers
         // Send a Request to Forge to Create the Site
         $response = $client->request('POST','servers/'.$server_id.'/sites', ['json' => [
             'domain' => $domain,
-            'project_type' => $project_type,
-            'directory' => $directory
+            'project_type' => 'php',
+            'directory' => '/public'
         ]]);
 
         // Return the response as an Array
@@ -355,6 +388,30 @@ class ForgeHelpers
 
     }
 
+
+    public static function wait_until_wordpress_is_ready(Site $site){
+        for($i = 0; $i < 20; $i++){
+            if(self::is_wordpress_ready($site)){
+                return true;
+            }
+            sleep(2*60);
+        }
+        return false;
+    }
+
+    public static function is_wordpress_ready(Site $site){
+
+        // Get a Forge Client
+        $client = self::get_forge_client();
+
+        // Send a Request to get the Server Information
+        $response = $client->request('GET','servers/'.$site->server->forge_server_id.'/sites/'.$site->forge_site_id);
+
+        // Return the value of the is_ready attribtue
+        $json = json_decode((string) $response->getBody(), true);
+        return ($json['site']['app'] == 'WordPress');
+
+    }
 
     /**
      * @param $server_id

@@ -16,6 +16,15 @@ class EventServiceProvider extends ServiceProvider
         'App\Events\Event' => [
             'App\Listeners\EventListener',
         ],
+
+        /*
+         * This event broadcasts client side, therefore,
+         * there are no listeners. The listeners are
+         * on the client side (javascript)
+         */
+        'App\Events\ServerStatusUpdated' => [
+
+        ]
     ];
 
     /**

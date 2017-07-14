@@ -9,6 +9,7 @@
 namespace App\Helpers;
 
 
+use App\Server;
 use Aws\Ec2\Ec2Client;
 use Aws\Iam\IamClient;
 
@@ -216,6 +217,15 @@ class AWSHelpers
 
     }
 
+
+    public static function restart_server(Server $server){
+        $credentials = $server->credential;
+        $client = self::getEC2Client($credentials->access_key_id, $credentials->secret_access_key, $server->region);
+
+        $client->rebootInstances([
+            'InstanceIds' => [$server->aws_instance_id]
+        ]);
+    }
 
 
     public static function addAccessPolicies($credentials){

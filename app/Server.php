@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Events\ServerStatusUpdated;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -29,6 +30,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Server extends Model
 {
+    // Fire ServerStatusUpdated Event each time a Server is created or updated
+    protected $events = [
+      'saved' => ServerStatusUpdated::class
+    ];
 
     /**
      * Get the Credential that this Server belongs To

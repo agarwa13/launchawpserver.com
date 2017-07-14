@@ -87,5 +87,25 @@
         $('div.alert').not('.alert-important').delay(3000).fadeOut(350);
     </script>
 
+@if(Auth::check())
+    <!-- Real Time Communication with Backend Server -->
+    <script>
+    $.getScript('https://js.pusher.com/4.1/pusher.min.js', function()
+    {
+
+    var pusher = new Pusher('0bceed298eb102c71e5b', {
+    cluster: 'us2',
+    encrypted: true
+    });
+
+    var channel = pusher.subscribe('App.User.{{Auth::user()->id}}');
+    channel.bind('ServerStatusUpdated', function(data) {
+        alert(data.message);
+    });
+
+    });
+    </script>
+@endif
+
 </body>
 </html>

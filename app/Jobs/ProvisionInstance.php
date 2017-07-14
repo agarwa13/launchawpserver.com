@@ -11,18 +11,22 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Helpers\SSHHelpers;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 
 
 class ProvisionInstance implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, DispatchesJobs{
+        Dispatchable::dispatch insteadOf DispatchesJobs;
+        DispatchesJobs::dispatch as jobDispatcher;
+    }
 
     protected $server;
 
     /**
      * @var int
      */
-    public $timeout = 300;
+    public $timeout = 1800;
 
     /**
      * Create a New Job Instance
@@ -43,19 +47,9 @@ class ProvisionInstance implements ShouldQueue
     {
 
         // Update the Status
-        $this->server->status = 'Provisioning';
+        $this->server->status = config('constants.server_provisioning');
         $this->server->save();
 
-        // Wait until we can SSH into the instance
-        $ssh = SSHHelpers::instance_available_for_ssh(
-            'ubuntu',
-            $this->server->ip_address,
-            Storage::get($this->server->key_pair_location)
-        );
-
-        // Update the Server so we can SSH as Root Instead of Ubuntu
-        $ssh->exec('sudo sed -i \'s/prohibit-password/yes/\' /etc/ssh/sshd_config');
-        $ssh->exec('sudo cp /home/ubuntu/.ssh/authorized_keys /root/.ssh/');
 
         // Create a Server on Forge
         $json = ForgeHelpers::create_server(
@@ -90,21 +84,15 @@ class ProvisionInstance implements ShouldQueue
         sleep(5);
 
         // Run the File
-        $ssh->exec('bash forge.sh');
+        $ssh->exec('nohup bash forge.sh');
 
         /*
          * Wait Until Server is Ready
          */
         ForgeHelpers::wait_until_server_ready( $this->server->forge_server_id );
 
-        // Run the Commands to Update the Server
-        $ssh->exec( 'apt-get update' );
-        $ssh->exec( 'apt-get upgrade' );
-        $ssh->exec( 'apt-get dist-upgrade' );
-
         //Get the Sites of the Server
         $response = ForgeHelpers::get_sites( $this->server->forge_server_id );
-
 
         //Delete the Default Site
         $sites = $response['sites'];
@@ -120,8 +108,8 @@ class ProvisionInstance implements ShouldQueue
             ForgeHelpers::wait_until_site_deleted( $this->server->forge_server_id , $deleted_site_id );
         }
 
-        // Restart the Server
-        ForgeHelpers::restart_server($this->server->forge_server_id);
+        // Add our Key to the Server (for forge user)
+        ForgeHelpers::add_key($this->server->forge_server_id, 'launchawpserver-'.$this->server->id ,Storage::get($this->server->key_pair_location));
 
         // Wait until we can SSH into the instance
         SSHHelpers::instance_available_for_ssh(
@@ -131,8 +119,16 @@ class ProvisionInstance implements ShouldQueue
         );
 
         // Update the Status of the Server
-        $this->server->status = 'Active';
+        $this->server->status = config('constants.server_active');
         $this->server->save();
 
     }
+
+    public function failed()
+    {
+        // When the Job Fails, we want to update the status of the Server to say so
+        $this->server->status = config('constants.server_provision_failed');
+        $this->server->save();
+    }
+
 }
