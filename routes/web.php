@@ -33,6 +33,11 @@ Route::get('hand-held-launch','HomeController@handHeldLaunch');
 
 //Route::get('test-launcher','LaunchController@testLauncher');
 
+/*
+ * Notification URL for Server Upgraded
+ */
+Route::get('servers/{id}/server-upgraded','ServerController@serverUpgraded');
+
 Route::resource('launch','LaunchController');
 Route::resource('sites','SiteController');
 Route::resource('servers','ServerController');

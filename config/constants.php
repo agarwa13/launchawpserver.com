@@ -21,6 +21,7 @@ return [
     'server_provisioning' => 'Provisioning',
     'server_queued_for_upgrading' => 'Queued for Upgrading',
     'server_upgrading' => 'Upgrading',
+    'server_upgrade_complete' => 'Upgrade Complete',
     'server_active' => 'Active',
     'server_unknown' => 'Unknown',
     'server_build_failed' => 'Build Failed',

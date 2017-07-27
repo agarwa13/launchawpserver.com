@@ -80,7 +80,7 @@ class UpgradeServer implements ShouldQueue
         Storage::append($file, 'wget ' . url( 'servers/' . $this->server->id . '/server-upgraded' ) );
 
         // Copy the File to the Server
-        $ssh->exec('wget ' . 'http://launchawpserver.bloggercasts.com.dev/' . $filename  );
+        $ssh->exec('wget ' . url($filename) );
 
         // Wait for the File to complete downloading
         sleep(5);
@@ -88,26 +88,29 @@ class UpgradeServer implements ShouldQueue
         // Run the File
         $ssh->exec('nohup bash '. $filename);
 
+        // Wait Until Server is Upgraded
+        while( !$this->is_server_upgraded($this->server->id) ){
+            sleep(30);
+        }
 
+        // Restart the Server
+        AWSHelpers::restart_server($this->server);
 
-//        // Run the Commands to Update the Server
-//        $ssh->exec( 'apt-get update' );
-//        $ssh->exec( 'apt-get -y upgrade' );
-//        $ssh->exec( 'apt-get -y dist-upgrade' );
+        //Wait 10 Seconds for Restart to Complete
+        sleep(10);
 
-//        // Restart the Server
-//        AWSHelpers::restart_server($this->server);
-//
-//        //Wait 10 Seconds for Restart to Complete
-//        sleep(10);
-//
-//        // Dispatch the Provisioning Server Job
-//        $this->jobDispatcher( new ProvisionInstance( $this->server ) );
+        // Dispatch the Provisioning Server Job
+        $this->jobDispatcher( new ProvisionInstance( $this->server ) );
 
         // Update the Status
         $this->server->status = config('constants.server_queued_for_provisioning');
         $this->server->save();
 
+    }
+
+    private function is_server_upgraded($id){
+        $server = Server::find($id);
+        return ( $server->status == config('constants.upgrade_complete') );
     }
 
     public function failed()

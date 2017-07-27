@@ -31,6 +31,20 @@ class ServerController extends Controller
         return view('servers.guide');
     }
 
+
+    /**
+     * @param Request $request
+     * @param Server $server
+     * @return mixed
+     */
+    public function serverUpgraded(Request $request, Server $server){
+
+        $server->status = config('constants.server_upgrade_complete');
+        $server->save();
+
+        return response()->file( public_path('server-upgraded-pixel.png') );
+    }
+
     /*
      * Display a listing of the resource
      * @return View
