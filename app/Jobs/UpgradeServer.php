@@ -110,7 +110,7 @@ class UpgradeServer implements ShouldQueue
 
     private function is_server_upgraded($id){
         $server = Server::find($id);
-        return ( $server->status == config('constants.upgrade_complete') );
+        return ( $server->status == config('constants.server_upgrade_complete') );
     }
 
     public function failed()

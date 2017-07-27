@@ -37,8 +37,10 @@ class ServerController extends Controller
      * @param Server $server
      * @return mixed
      */
-    public function serverUpgraded(Request $request, Server $server){
+    public function serverUpgraded($id){
 
+        $server = Server::findOrFail($id);
+        
         $server->status = config('constants.server_upgrade_complete');
         $server->save();
 
