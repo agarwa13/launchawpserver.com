@@ -51,16 +51,22 @@ class LaunchInstance implements ShouldQueue
         $keyPairName = 'key-pair-'.$this->server->id;
         $result = AWSHelpers::create_key_pair($this->server, $keyPairName);
 
-        // Save the Private key to Disk
-        $saveKeyLocation = storage_path('app/'.$keyPairName.".pem");
-        file_put_contents( $saveKeyLocation ,  $result['KeyMaterial'] );
+        // Result is Null if the key pair already exists
+
+        if($result != null){
+            // Save the Private key to Disk
+            $saveKeyLocation = storage_path('app/'.$keyPairName.".pem");
+            file_put_contents( $saveKeyLocation ,  $result['KeyMaterial'] );
+
+            // Update the key's permissions so it can be used with SSH
+            chmod( $saveKeyLocation , 0600);
+        }else{
+            // TODO: check if that key pair is already on the disk. If it is not, throw an exception
+        }
 
         // Save the location to Database for later retrieval using the Storage::get function
         $this->server->key_pair_location = $keyPairName.".pem";
         $this->server->save();
-
-        // Update the key's permissions so it can be used with SSH
-        chmod( $saveKeyLocation , 0600);
 
         // Create the Security Group
         $securityGroupName = AWSHelpers::create_security_group($this->server);

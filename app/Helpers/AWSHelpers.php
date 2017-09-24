@@ -66,6 +66,8 @@ class AWSHelpers
             $result = $client->createKeyPair(array(
                 'KeyName' => $keyPairName
             ));
+
+            return $result;
         }
         catch(Ec2Exception $ec2Exception){
             if ($ec2Exception->getAwsErrorCode() == 'InvalidKeyPair.Duplicate'){
@@ -75,8 +77,9 @@ class AWSHelpers
             }
         }
 
+        // Should only reach here if we did not create a new key pair on AWS.
+        return null;
 
-        return $result;
     }
 
 
@@ -195,10 +198,12 @@ class AWSHelpers
 
         // Update the Instance Name Tag
         $client->createTags([
-           'Resources' => $server->aws_instance_id,
+           'Resources' => [
+               $server->aws_instance_id
+           ],
             'Tags' => [
-                'Key' => 'name',
-                'Value' => $server->name
+                'Key' => ['name'],
+                'Value' => [$server->name]
             ]
         ]);
 
