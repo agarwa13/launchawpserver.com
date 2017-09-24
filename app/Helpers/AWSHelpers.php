@@ -172,6 +172,13 @@ class AWSHelpers
         $server->aws_instance_id = $instance_id;
         $server->save();
 
+        // Update the Instance Name Tag
+        $client->createTags([
+           'resources' => $server->aws_instance_id,
+            'key' => 'name',
+            'value' => $server->name
+        ]);
+
         return $instance;
     }
 
