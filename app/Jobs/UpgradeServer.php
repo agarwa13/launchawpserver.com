@@ -61,43 +61,43 @@ class UpgradeServer implements ShouldQueue
         // Wait for 5 seconds
         sleep(5);
 
-        /*
-         * We get a New SSH Connection since the old one has probably timed out
-         */
-        $ssh = SSHHelpers::instance_available_for_ssh(
-            'root',
-            $this->server->ip_address,
-            Storage::get($this->server->key_pair_location)
-        );
-
-        $filename = 'update-server-'.$this->server->id.'.sh';
-        $file = 'public/'.$filename;
-
-        // Create a copy of the Basic Update Server Script
-        Storage::copy('public/update-server.sh', $file );
-
-        // Append the Notification Line
-        Storage::append($file, 'wget ' . url( 'servers/' . $this->server->id . '/server-upgraded' ) );
-
-        // Copy the File to the Server
-        $ssh->exec('wget ' . url($filename) );
-
-        // Wait for the File to complete downloading
-        sleep(5);
-
-        // Run the File
-        $ssh->exec('nohup bash '. $filename);
-
-        // Wait Until Server is Upgraded
-        while( !$this->is_server_upgraded($this->server->id) ){
-            sleep(30);
-        }
-
-        // Restart the Server
-        AWSHelpers::restart_server($this->server);
-
-        //Wait 10 Seconds for Restart to Complete
-        sleep(10);
+//        /*
+//         * We get a New SSH Connection since the old one has probably timed out
+//         */
+//        $ssh = SSHHelpers::instance_available_for_ssh(
+//            'root',
+//            $this->server->ip_address,
+//            Storage::get($this->server->key_pair_location)
+//        );
+//
+//        $filename = 'update-server-'.$this->server->id.'.sh';
+//        $file = 'public/'.$filename;
+//
+//        // Create a copy of the Basic Update Server Script
+//        Storage::copy('public/update-server.sh', $file );
+//
+//        // Append the Notification Line
+//        Storage::append($file, 'wget ' . url( 'servers/' . $this->server->id . '/server-upgraded' ) );
+//
+//        // Copy the File to the Server
+//        $ssh->exec('wget ' . url($filename) );
+//
+//        // Wait for the File to complete downloading
+//        sleep(5);
+//
+//        // Run the File
+//        $ssh->exec('nohup bash '. $filename);
+//
+//        // Wait Until Server is Upgraded
+//        while( !$this->is_server_upgraded($this->server->id) ){
+//            sleep(30);
+//        }
+//
+//        // Restart the Server
+//        AWSHelpers::restart_server($this->server);
+//
+//        //Wait 10 Seconds for Restart to Complete
+//        sleep(10);
 
         // Dispatch the Provisioning Server Job
         $this->jobDispatcher( new ProvisionInstance( $this->server ) );
