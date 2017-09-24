@@ -195,10 +195,10 @@ class AWSHelpers
 
         // Update the Instance Name Tag
         $client->createTags([
-           'resources' => $server->aws_instance_id,
-            'tags' => [
-                'key' => 'name',
-                'value' => $server->name
+           'Resources' => $server->aws_instance_id,
+            'Tags' => [
+                'Key' => 'name',
+                'Value' => $server->name
             ]
         ]);
 
