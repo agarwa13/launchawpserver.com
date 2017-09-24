@@ -154,7 +154,8 @@ class AWSHelpers
 
         // Launch an instance with the key pair and security group
         $result = $client->runInstances(array(
-            'ImageId'        => 'ami-840910ee',
+//            'ImageId'        => 'ami-840910ee',
+            'ImageId'        => 'ami-1e2edb64',
             'MinCount'       => 1,
             'MaxCount'       => 1,
             'InstanceType'   => self::getAWSServerSize($server->size),

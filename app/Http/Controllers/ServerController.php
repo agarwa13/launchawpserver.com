@@ -40,7 +40,7 @@ class ServerController extends Controller
     public function serverUpgraded($id){
 
         $server = Server::findOrFail($id);
-        
+
         $server->status = config('constants.server_upgrade_complete');
         $server->save();
 

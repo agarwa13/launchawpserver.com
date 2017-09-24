@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use App\Jobs\ProvisionInstance;
 
 class LaunchInstance implements ShouldQueue
 {
@@ -74,7 +75,7 @@ class LaunchInstance implements ShouldQueue
         AWSHelpers::update_ip_addresses_in_database( $this->server );
 
         // Launch a Job to Upgrade the Server
-        $this->jobDispatcher( new UpgradeServer( $this->server) );
+        $this->jobDispatcher( new ProvisionInstance( $this->server) );
 
         // Update the Status
         $this->server->status = config('constants.server_queued_for_upgrading');
