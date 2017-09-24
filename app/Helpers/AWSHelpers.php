@@ -11,6 +11,7 @@ namespace App\Helpers;
 
 use App\Server;
 use Aws\Ec2\Ec2Client;
+use Aws\Ec2\Exception\Ec2Exception;
 use Aws\Iam\IamClient;
 
 class AWSHelpers
@@ -80,11 +81,20 @@ class AWSHelpers
 
         $security_group_name = 'launch-a-wp-server-'.$server->id;
 
-        $client->createSecurityGroup(array(
-            'GroupName'   => $security_group_name,
-            'Description' => 'Launch a WP Server Security Group'
-        ));
-
+        try{
+            $client->createSecurityGroup(array(
+                'GroupName'   => $security_group_name,
+                'Description' => 'Launch a WP Server Security Group'
+            ));
+        }
+        catch (Ec2Exception $ec2Exception){
+            if ( $ec2Exception->getAwsErrorCode() == 'InvalidGroup.Duplicate' ){
+                // Continue since the Security Group Already Exists
+            }else{
+                throwException($ec2Exception);
+            }
+        }
+        
         // Set ingress rules for the security group
         $client->authorizeSecurityGroupIngress(array(
             'GroupName'     => $security_group_name,
