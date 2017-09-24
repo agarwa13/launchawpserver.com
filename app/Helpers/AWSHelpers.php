@@ -60,10 +60,21 @@ class AWSHelpers
             $server->region
         );
 
+
         // Create the Key Pair on AWS
-        $result = $client->createKeyPair(array(
-            'KeyName' => $keyPairName
-        ));
+        try{
+            $result = $client->createKeyPair(array(
+                'KeyName' => $keyPairName
+            ));
+        }
+        catch(Ec2Exception $ec2Exception){
+            if ($ec2Exception->getAwsErrorCode() == 'InvalidKeyPair.Duplicate'){
+                // Continue on if the Key Pair already exists
+            }else{
+                throwException( $ec2Exception);
+            }
+        }
+
 
         return $result;
     }
@@ -94,7 +105,7 @@ class AWSHelpers
                 throwException($ec2Exception);
             }
         }
-        
+
         // Set ingress rules for the security group
         $client->authorizeSecurityGroupIngress(array(
             'GroupName'     => $security_group_name,
