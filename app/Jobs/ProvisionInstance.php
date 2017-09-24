@@ -75,16 +75,10 @@ class ProvisionInstance implements ShouldQueue
             Storage::get($this->server->key_pair_location)
         );
 
-        // Download the File from Forge
+        // Download the File from Forge and Run the File
         $arr = explode(" bash", $json['provision_command'], 2);
         $download_file_command = $arr[0];
-        $ssh->exec($download_file_command);
-
-        // Wait for the File to complete downloading
-        sleep(5);
-
-        // Run the File
-        $ssh->exec('nohup bash forge.sh');
+        $ssh->exec($download_file_command . ' && ' . 'nohup bash forge.sh' );
 
         /*
          * Wait Until Server is Ready
