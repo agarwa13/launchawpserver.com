@@ -85,6 +85,8 @@ class AWSHelpers
 
     public static function create_security_group($server){
 
+        $security_group_already_exists = false;
+
         $credentials = $server->credential;
 
         $client = self::getEC2Client(
@@ -103,42 +105,49 @@ class AWSHelpers
         }
         catch (Ec2Exception $ec2Exception){
             if ( $ec2Exception->getAwsErrorCode() == 'InvalidGroup.Duplicate' ){
+                // Set Flag to Indicate AWS Security Group Already Exists
+                $security_group_already_exists = true;
                 // Continue since the Security Group Already Exists
             }else{
                 throwException($ec2Exception);
             }
         }
 
+
         // Set ingress rules for the security group
-        $client->authorizeSecurityGroupIngress(array(
-            'GroupName'     => $security_group_name,
-            'IpPermissions' => array(
-                array(
-                    'IpProtocol' => 'tcp',
-                    'FromPort'   => 80,
-                    'ToPort'     => 80,
-                    'IpRanges'   => array(
-                        array('CidrIp' => '0.0.0.0/0')
+        if($security_group_already_exists){
+            // Continue
+        }else{
+            $client->authorizeSecurityGroupIngress(array(
+                'GroupName'     => $security_group_name,
+                'IpPermissions' => array(
+                    array(
+                        'IpProtocol' => 'tcp',
+                        'FromPort'   => 80,
+                        'ToPort'     => 80,
+                        'IpRanges'   => array(
+                            array('CidrIp' => '0.0.0.0/0')
+                        ),
                     ),
-                ),
-                array(
-                    'IpProtocol' => 'tcp',
-                    'FromPort'   => 22,
-                    'ToPort'     => 22,
-                    'IpRanges'   => array(
-                        array('CidrIp' => '0.0.0.0/0')
+                    array(
+                        'IpProtocol' => 'tcp',
+                        'FromPort'   => 22,
+                        'ToPort'     => 22,
+                        'IpRanges'   => array(
+                            array('CidrIp' => '0.0.0.0/0')
+                        ),
                     ),
-                ),
-                array(
-                    'IpProtocol' => 'tcp',
-                    'FromPort'   => 443,
-                    'ToPort'     => 443,
-                    'IpRanges'   => array(
-                        array('CidrIp' => '0.0.0.0/0')
-                    ),
+                    array(
+                        'IpProtocol' => 'tcp',
+                        'FromPort'   => 443,
+                        'ToPort'     => 443,
+                        'IpRanges'   => array(
+                            array('CidrIp' => '0.0.0.0/0')
+                        ),
+                    )
                 )
-            )
-        ));
+            ));
+        }
 
         return $security_group_name;
 
