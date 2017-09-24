@@ -211,8 +211,10 @@ class AWSHelpers
                $server->aws_instance_id
            ],
             'Tags' => [
-                'Key' => ['name'],
-                'Value' => [$server->name]
+                [
+                    'Key' => 'name',
+                    'Value' => $server->name
+                ]
             ]
         ]);
 
