@@ -52,13 +52,13 @@ class InstallWordPress implements ShouldQueue
         $forge_database = ForgeHelpers::create_database( $this->site->server->forge_server_id, $this->site->database_name );
 
         print_r($forge_database);
-        
+
         $this->site->forge_database_id = $forge_database['database']['id'];
         $this->site->save();
 
         // Create a Database
         ForgeHelpers::wait_until_database_is_ready( $this->site->server->forge_server_id, $this->site->forge_database_id  );
-        $forge_database_user = ForgeHelpers::create_database_user( $this->site->server->forge_server_id, $this->site->database_user_name, $this->site->database_user_name );
+        $forge_database_user = ForgeHelpers::create_database_user( $this->site->server->forge_server_id, $this->site->database_user_name, $this->site->database_user_password, $this->site->forge_database_id );
 
         // Create a User for the Database
         $this->site->forge_database_user_id = $forge_database_user['user']['id'];
