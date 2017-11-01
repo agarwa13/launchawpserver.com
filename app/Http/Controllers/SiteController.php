@@ -86,7 +86,7 @@ class SiteController extends Controller
          * Show the Page from which the Site was Created.
          */
         return redirect('servers/'.$site->server_id);
-        
+
     }
 
     /**

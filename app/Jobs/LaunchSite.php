@@ -47,7 +47,7 @@ class LaunchSite implements ShouldQueue
         $this->site->save();
 
         // Ask Forge to Create the Site
-        $forge_site = ForgeHelpers::create_site($this->site->server->id, $this->site->domain_name);
+        $forge_site = ForgeHelpers::create_site($this->site->server->forge_server_id, $this->site->domain_name);
 
         // Update the Database with the Site ID
         $this->site->forge_site_id = $forge_site['site']['id'];
