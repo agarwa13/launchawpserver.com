@@ -69,6 +69,7 @@ class SiteController extends Controller
         $site->database_name =  ForgeHelpers::getRandomDatabaseName();
         $site->database_user_name = ForgeHelpers::getRandomDatabaseUserName();
         $site->database_user_password = ForgeHelpers::getRandomDatabaseUserPassword();
+        $site->status = config('constants.site_queued_for_building');
         $site->save();
 
         /*
@@ -79,10 +80,13 @@ class SiteController extends Controller
         /*
          * Flash Success Message
          */
-        flash('Server is Queued for Building');
+        flash('Site is Queued for Building');
 
-        return view('servers.index')
-            ->with('servers',Auth::user()->servers);
+        /*
+         * Show the Page from which the Site was Created.
+         */
+        return view('servers.show')
+            ->with('server', Server::firstOrFail($site->server_id));
 
     }
 
