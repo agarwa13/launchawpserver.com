@@ -52,7 +52,7 @@ class LaunchSite implements ShouldQueue
         print_r($forge_site);
 
         // Update the Database with the Site ID
-        $this->site->forge_site_id = $forge_site[0]['site']['id'];
+        $this->site->forge_site_id = (string) $forge_site['site']['id'];
         $this->site->save();
 
         // Wait until Site is Installed
