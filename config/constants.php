@@ -33,7 +33,7 @@ return [
      */
     'site_queued_for_building' => 'Queued for Building',
     'site_building' => 'Building',
-    'site_server_queued_for_wordpress_installation' => 'Queued for WordPress Installation',
+    'site_queued_for_wordpress_installation' => 'Queued for WordPress Installation',
     'site_installing_wordpress' => 'Installing WordPress',
     'site_ready_for_DNS_update' => 'Ready for DNS Update'
 
