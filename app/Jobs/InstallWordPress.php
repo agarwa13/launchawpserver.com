@@ -50,6 +50,9 @@ class InstallWordPress implements ShouldQueue
 
         // Ask Forge to Install WordPress
         $forge_database = ForgeHelpers::create_database( $this->site->server->forge_server_id, $this->site->database_name );
+
+        print_r($forge_database);
+        
         $this->site->forge_database_id = $forge_database['database']['id'];
         $this->site->save();
 
