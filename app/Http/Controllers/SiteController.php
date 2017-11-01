@@ -85,9 +85,8 @@ class SiteController extends Controller
         /*
          * Show the Page from which the Site was Created.
          */
-        return view('servers.show')
-            ->with('server', Server::firstOrFail($site->server_id));
-
+        return redirect('servers/'.$site->server_id);
+        
     }
 
     /**
