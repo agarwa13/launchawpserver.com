@@ -14,6 +14,7 @@
 
                         <tr>
                             <td>Domain Name</td>
+                            <td>Status</td>
                             <td>SSL</td>
                             <td></td>
                         </tr>
@@ -21,6 +22,7 @@
                         @forelse($server->sites as $site)
                             <tr>
                                 <td><a href="{{url('/sites/'.$site->id)}}">{{ $site->domain_name }}</a></td>
+                                <td>{{$site->status}}</td>
                                 <td><!-- TODO: Site SSL Status --></td>
                                 <td>
                                     <button class="btn btn-danger btn-circle">
